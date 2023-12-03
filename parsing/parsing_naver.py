@@ -1,10 +1,11 @@
+import os
 import time
-import pandas as pd
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from pprint import pprint
 from selenium.webdriver.common.by import By
 import pandas as pd
+import openpyxl
 
 url = 'https://new.land.naver.com/rooms?ms=35.8409376,127.1240086,16&a=APT:OPST:ABYG:OBYG:GM:OR:VL:DDDGG:JWJT:SGJT:HOJT&e=RETAIL&aa=SMALLSPCRENT&ae=ONEROOM'
 driver = webdriver.Chrome(ChromeDriverManager().install())
@@ -19,6 +20,7 @@ for oneroom in onerooms:
     pprint(oneroom.text)
 
 time.sleep(3)
+data_list = []
 
 for i in range(1,31):
     try:
@@ -28,28 +30,27 @@ for i in range(1,31):
         tbody = table.find_element_by_tag_name("tbody")
         rows = tbody.find_elements_by_tag_name("tr")
         for index, value in enumerate(rows):
-            body = value.find_elements_by_tag_name("td")[0]
-            print(body.text)
-            print("하나끝~")
+            cells = value.find_elements_by_tag_name("td")
+            cell_data = [cell.text for cell in cells]
+            data_list.append(cell_data)
+        #     for cell in cells:
+        #         print(cell.text)
+        #
+        # print("-------------------------------------------")
 
     except:
         pass
 
-    # print(info)
-    # print(len(driver.current_url))
-print("-----------------------")
-# for i in range(1, 31):
-#     try:
-#         each_room_button = driver.find_element(By.XPATH,
-#                                                f'//*[@id="listContents1"]/div/div/div/div[{i}]/div/a[2]')
-#         each_room = each_room_button.click()
-#     except:
-#         pass
+# print("-----------------------")
+df = pd.DataFrame(data_list)
+# print(df)
 #
-#     print(driver.current_url)
-# print(info)
-time.sleep(3)
-driver.quit()
+output_dir = "../output/"
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+output_filename = os.path.join(output_dir, 'naver_parsing_data.xlsx')
+# df.to_excel('naver.xlsx', index=False)
 
 
 
