@@ -6,6 +6,8 @@ from folium import Marker
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium, folium_static
 
+def add_dimensions(url, w=300, h=200):
+    return f"{url}?w={w}&h={h}"
 
 def main():
     st.title("방찾기")
@@ -15,22 +17,23 @@ def main():
     deposit_cost = st.slider('보증금 범위 선택해라', min_value=0, value= 200, max_value=1000)
     monthly_cost = st.slider('월세 범위 선택해라', min_value=0, value= 50, max_value=100)
 
-
-
-
-    img = "https://ic.zigbang.com/ic/items/38774182/1.jpg?w=500&h=300"
-    st.image(img)
-
-
     df = pd.read_excel('output/zigbang_parsing_data_2.xlsx')
     # st.map(df, zoom=15)
 
     m = folium.Map(location=[35.8440159, 127.127327], zoom_start=15, tiles="cartodbpositron")
 
+    df['image_url'] = df['사진'].apply(add_dimensions)
+    print(df)
     for i, row in df.iterrows():
-        iframe = f"이름: <strong>{row['name']}</strong><br>국가격자번호: <strong>{row['gloc']}</strong><br> 위경도: {row['lat']:.4f}, {row['lon']:.4f}<br> 주소: {row['addr_name']}"
-        popup = folium.Popup(iframe, min_width=200, max_width=200)
-        folium.Marker(location=[row['lat'], row['lon']]).add_to(m)
+        # iframe = f"이름: <strong>{row['name']}</strong><br>국가격자번호: <strong>{row['gloc']}</strong><br> 위경도: {row['lat']:.4f}, {row['lon']:.4f}<br> 주소: {row['addr_name']}"
+        iframe = f"{row['image_url']}"
+        # popup = folium.Popup(row['image_url'], min_width=200, max_width=200)
+        # popup = f'<img src="{row['사진']}" width="300" height="200">'
+        tooltip = '<i>title</i>'
+        folium.Marker(location=[row['lat'], row['lon']], tooltip=tooltip).add_to(m)
+        st.title('tilte')
+        st.image(row['image_url'])
+
     # cluster = MarkerCluster()
     # for _, i in df.iterrows():
     #     cluster.add_child(
