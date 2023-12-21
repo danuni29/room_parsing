@@ -27,7 +27,7 @@ def dabang_parsing(url, region):
   # print(len(data))
 
 
-  colums = ["seq", "room_type_str", "location" ,"selling_type_str", "title", "price_title", "img_url", "img_urls", 'room_desc2']
+  colums = ["seq", "id", "room_type_str", "location" ,"selling_type_str", "title", "price_title", "img_url", "img_urls", 'room_desc2']
   df = pd.DataFrame(data)[colums]
   # df1 = df.rename(columns={"seq": "id", "room_type_str": "방 유형", "selling_type_str": "판매 유형", "price_title": "가격", "img_url": "대표사진", "img_urls": "사진", 'room_desc2': "상세내용"})
   #
@@ -46,6 +46,3 @@ def dabang_parsing(url, region):
   df.to_excel(output_filename, index=False)
 
 
-dabang_url_dukjin = "https://www.dabangapp.com/api/3/room/new-list/multi-room/region?api_version=3.0.1&call_type=web&code=45113105&filters=%7B%22multi_room_type%22%3A%5B0%5D%2C%22selling_type%22%3A%5B0%5D%2C%22deposit_range%22%3A%5B0%2C999999%5D%2C%22price_range%22%3A%5B0%2C999999%5D%2C%22trade_range%22%3A%5B0%2C999999%5D%2C%22maintenance_cost_range%22%3A%5B0%2C999999%5D%2C%22room_size%22%3A%5B0%2C999999%5D%2C%22supply_space_range%22%3A%5B0%2C999999%5D%2C%22room_floor_multi%22%3A%5B1%2C2%2C3%2C4%2C5%2C6%2C7%2C-1%2C0%5D%2C%22division%22%3Afalse%2C%22duplex%22%3Afalse%2C%22room_type%22%3A%5B%5D%2C%22use_approval_date_range%22%3A%5B0%2C999999%5D%2C%22parking_average_range%22%3A%5B0%2C999999%5D%2C%22household_num_range%22%3A%5B0%2C999999%5D%2C%22parking%22%3Afalse%2C%22short_lease%22%3Afalse%2C%22full_option%22%3Afalse%2C%22elevator%22%3Afalse%2C%22balcony%22%3Afalse%2C%22safety%22%3Afalse%2C%22pano%22%3Afalse%2C%22is_contract%22%3Afalse%2C%22deal_type%22%3A%5B0%2C1%5D%2C%22animal%22%3Afalse%2C%22loan%22%3Afalse%7D&page=1&version=1&zoom=14"
-
-dabang_parsing(dabang_url_dukjin, 'dukjin')

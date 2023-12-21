@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
 import folium
-from folium import plugins
-from folium import Marker
-from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium, folium_static
 from PIL import Image
 import os
@@ -32,6 +29,9 @@ def calculate_distance_sadae(lat, lon, df):
 def main():
     # 사이드바를 만들어보자
 
+    if 'selected_location' not in st.session_state:
+        st.session_state.selected_location = None
+
     st.sidebar.title('내방찾기🏡')
 
     gujung = 0
@@ -39,13 +39,13 @@ def main():
     shin = 0
 
     region = st.sidebar.radio(label='원하는 지역이 있나요?', options=['네', '아니요'])
-    print(region)
+    # print(region)
     if region == '네':
         location = ["구정문", "사대부고", "신정문"]
-        selected_location = st.sidebar.selectbox("원하는 지역을 알려주세요", location)
-        print(selected_location)
+        st.session_state.selected_location = st.sidebar.selectbox("원하는 지역을 알려주세요", location)
 
     else:
+
         st.sidebar.write("당신에게 맞는 지역을 찾아드려요")
         quietness = st.sidebar.radio(label='조용한 곳을 선호하시나요?', options=['네', '상관없어요'])
         infra = st.sidebar.radio(label='주변에 놀거리가 많았으면 좋겠나요?', options=['네', '상관없어요'])
@@ -70,135 +70,270 @@ def main():
         else:
             gujung += 10
 
+
+
         region_list = [shin, gujung, sadae]
         btn_clicked = st.sidebar.button("제출")
         if btn_clicked:
+
+
             if max(region_list) == shin:
                 st.sidebar.write("신정문 지역을 추천드려요!")
                 st.sidebar.write("신정문으로부터 가까운 집을 찾아드릴게요")
-                room = shin
-            if max(region_list) == gujung:
+                st.session_state.selected_location = '신정문'
+            elif max(region_list) == gujung:
                 st.sidebar.write("구정문 지역을 추천드려요!")
                 st.sidebar.write("구정문으로부터 가까운 집을 찾아드릴게요")
-                room = gujung
-            if max(region_list) == sadae:
+                st.session_state.selected_location = '구정문'
+            else:
                 st.sidebar.write("사대부고 지역을 추천드려요!")
                 st.sidebar.write("사대부고로부터 가까운 집을 찾아드릴게요")
-                room = sadae
+                st.session_state.selected_location = '사대부고'
+
 
 # ------
     gujung_location = [35.8440610, 127.127228]
     sadae_location = [35.8424118, 127.135472]
     shin_location = [35.8402431, 127.132479]
 
-    # 직방 API로 부터 파싱
-    parsing_zigbang('덕진동1가')
-    parsing_zigbang('금암동')
-
-    file1 = pd.read_excel('../output/zigbang_parsing_data_금암동.xlsx')
-    file2 = pd.read_excel('../output/zigbang_parsing_data_덕진동1가.xlsx')
-
-    zigbang_total_df = pd.concat([file1, file2])
-    zigbang_total_df = zigbang_total_df.rename(columns={'lng': 'lon'}) # streamlit에서 lng안됨...lon으로 해야함.....하아
-    calculate_distance_gujung(gujung_location[0], gujung_location[1], zigbang_total_df)
-    calculate_distance_sadae(sadae_location[0], sadae_location[1], zigbang_total_df)
-    calculate_distance_shin(shin_location[0], shin_location[1], zigbang_total_df)
-
     output_dir = "../output/"
     if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
-    output_filename = os.path.join(output_dir, 'zigbang_total_data.xlsx')
-    zigbang_total_df.to_excel(output_filename, index=False)
+        # 직방 API로 부터 파싱
+        parsing_zigbang('덕진동1가')
+        parsing_zigbang('금암동')
 
-    # 다방 API로 부터 파싱
-    dabang_url_dukjin = "https://www.dabangapp.com/api/3/room/new-list/multi-room/region?api_version=3.0.1&call_type=web&code=45113105&filters=%7B%22multi_room_type%22%3A%5B0%5D%2C%22selling_type%22%3A%5B0%5D%2C%22deposit_range%22%3A%5B0%2C999999%5D%2C%22price_range%22%3A%5B0%2C999999%5D%2C%22trade_range%22%3A%5B0%2C999999%5D%2C%22maintenance_cost_range%22%3A%5B0%2C999999%5D%2C%22room_size%22%3A%5B0%2C999999%5D%2C%22supply_space_range%22%3A%5B0%2C999999%5D%2C%22room_floor_multi%22%3A%5B1%2C2%2C3%2C4%2C5%2C6%2C7%2C-1%2C0%5D%2C%22division%22%3Afalse%2C%22duplex%22%3Afalse%2C%22room_type%22%3A%5B%5D%2C%22use_approval_date_range%22%3A%5B0%2C999999%5D%2C%22parking_average_range%22%3A%5B0%2C999999%5D%2C%22household_num_range%22%3A%5B0%2C999999%5D%2C%22parking%22%3Afalse%2C%22short_lease%22%3Afalse%2C%22full_option%22%3Afalse%2C%22elevator%22%3Afalse%2C%22balcony%22%3Afalse%2C%22safety%22%3Afalse%2C%22pano%22%3Afalse%2C%22is_contract%22%3Afalse%2C%22deal_type%22%3A%5B0%2C1%5D%2C%22animal%22%3Afalse%2C%22loan%22%3Afalse%7D&page=1&version=1&zoom=14"
-    dabang_url_geumam = "https://www.dabangapp.com/api/3/room/new-list/multi-room/bbox?api_version=3.0.1&call_type=web&filters=%7B%22multi_room_type%22%3A%5B0%2C2%5D%2C%22selling_type%22%3A%5B0%2C1%2C2%5D%2C%22deposit_range%22%3A%5B0%2C999999%5D%2C%22price_range%22%3A%5B0%2C999999%5D%2C%22trade_range%22%3A%5B0%2C999999%5D%2C%22maintenance_cost_range%22%3A%5B0%2C999999%5D%2C%22room_size%22%3A%5B0%2C999999%5D%2C%22supply_space_range%22%3A%5B0%2C999999%5D%2C%22room_floor_multi%22%3A%5B1%2C2%2C3%2C4%2C5%2C6%2C7%2C-1%2C0%5D%2C%22division%22%3Afalse%2C%22duplex%22%3Afalse%2C%22room_type%22%3A%5B%5D%2C%22use_approval_date_range%22%3A%5B0%2C999999%5D%2C%22parking_average_range%22%3A%5B0%2C999999%5D%2C%22household_num_range%22%3A%5B0%2C999999%5D%2C%22parking%22%3Afalse%2C%22short_lease%22%3Afalse%2C%22full_option%22%3Afalse%2C%22elevator%22%3Afalse%2C%22balcony%22%3Afalse%2C%22safety%22%3Afalse%2C%22pano%22%3Afalse%2C%22is_contract%22%3Afalse%2C%22deal_type%22%3A%5B0%2C1%5D%7D&location=%5B%5B127.1296452%2C35.8380491%5D%2C%5B127.1382282%2C35.8450851%5D%5D&page=1&version=1&zoom=17"
+        file1 = pd.read_excel('../output/zigbang_parsing_data_금암동.xlsx')
+        file2 = pd.read_excel('../output/zigbang_parsing_data_덕진동1가.xlsx')
 
-    dabang_parsing(dabang_url_dukjin, 'geumam')
-    dabang_parsing(dabang_url_geumam, 'dukjin')
+        zigbang_total_df = pd.concat([file1, file2])
+        zigbang_total_df = zigbang_total_df.rename(columns={'lng': 'lon'}) # streamlit에서 lng안됨...lon으로 해야함.....하아
+        calculate_distance_gujung(gujung_location[0], gujung_location[1], zigbang_total_df)
+        calculate_distance_sadae(sadae_location[0], sadae_location[1], zigbang_total_df)
+        calculate_distance_shin(shin_location[0], shin_location[1], zigbang_total_df)
 
-    file1 = pd.read_excel('../output/dabang_parsing_data_geumam.xlsx')
-    file2 = pd.read_excel('../output/dabang_parsing_data_dukjin.xlsx')
+        output_dir = "../output/"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
-    dabang_total_df = pd.concat([file1, file2])
-    print(dabang_total_df)
-    calculate_distance_gujung(gujung_location[0], gujung_location[1], dabang_total_df)
-    calculate_distance_sadae(sadae_location[0], sadae_location[1], dabang_total_df)
-    calculate_distance_shin(shin_location[0], shin_location[1], dabang_total_df)
+        output_filename = os.path.join(output_dir, 'zigbang_total_data.xlsx')
+        zigbang_total_df.to_excel(output_filename, index=False)
 
+        # 다방 API로 부터 파싱
+        dabang_url_dukjin = "https://www.dabangapp.com/api/3/room/new-list/multi-room/region?api_version=3.0.1&call_type=web&code=45113105&filters=%7B%22multi_room_type%22%3A%5B0%5D%2C%22selling_type%22%3A%5B0%5D%2C%22deposit_range%22%3A%5B0%2C999999%5D%2C%22price_range%22%3A%5B0%2C999999%5D%2C%22trade_range%22%3A%5B0%2C999999%5D%2C%22maintenance_cost_range%22%3A%5B0%2C999999%5D%2C%22room_size%22%3A%5B0%2C999999%5D%2C%22supply_space_range%22%3A%5B0%2C999999%5D%2C%22room_floor_multi%22%3A%5B1%2C2%2C3%2C4%2C5%2C6%2C7%2C-1%2C0%5D%2C%22division%22%3Afalse%2C%22duplex%22%3Afalse%2C%22room_type%22%3A%5B%5D%2C%22use_approval_date_range%22%3A%5B0%2C999999%5D%2C%22parking_average_range%22%3A%5B0%2C999999%5D%2C%22household_num_range%22%3A%5B0%2C999999%5D%2C%22parking%22%3Afalse%2C%22short_lease%22%3Afalse%2C%22full_option%22%3Afalse%2C%22elevator%22%3Afalse%2C%22balcony%22%3Afalse%2C%22safety%22%3Afalse%2C%22pano%22%3Afalse%2C%22is_contract%22%3Afalse%2C%22deal_type%22%3A%5B0%2C1%5D%2C%22animal%22%3Afalse%2C%22loan%22%3Afalse%7D&page=1&version=1&zoom=14"
+        dabang_url_geumam = "https://www.dabangapp.com/api/3/room/new-list/multi-room/bbox?api_version=3.0.1&call_type=web&filters=%7B%22multi_room_type%22%3A%5B0%2C2%5D%2C%22selling_type%22%3A%5B0%2C1%2C2%5D%2C%22deposit_range%22%3A%5B0%2C999999%5D%2C%22price_range%22%3A%5B0%2C999999%5D%2C%22trade_range%22%3A%5B0%2C999999%5D%2C%22maintenance_cost_range%22%3A%5B0%2C999999%5D%2C%22room_size%22%3A%5B0%2C999999%5D%2C%22supply_space_range%22%3A%5B0%2C999999%5D%2C%22room_floor_multi%22%3A%5B1%2C2%2C3%2C4%2C5%2C6%2C7%2C-1%2C0%5D%2C%22division%22%3Afalse%2C%22duplex%22%3Afalse%2C%22room_type%22%3A%5B%5D%2C%22use_approval_date_range%22%3A%5B0%2C999999%5D%2C%22parking_average_range%22%3A%5B0%2C999999%5D%2C%22household_num_range%22%3A%5B0%2C999999%5D%2C%22parking%22%3Afalse%2C%22short_lease%22%3Afalse%2C%22full_option%22%3Afalse%2C%22elevator%22%3Afalse%2C%22balcony%22%3Afalse%2C%22safety%22%3Afalse%2C%22pano%22%3Afalse%2C%22is_contract%22%3Afalse%2C%22deal_type%22%3A%5B0%2C1%5D%7D&location=%5B%5B127.1296452%2C35.8380491%5D%2C%5B127.1382282%2C35.8450851%5D%5D&page=1&version=1&zoom=17"
 
-    output_dir = "../output/"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+        dabang_parsing(dabang_url_dukjin, 'geumam')
+        dabang_parsing(dabang_url_geumam, 'dukjin')
 
-    output_filename = os.path.join(output_dir, 'dabang_total_data.xlsx')
-    dabang_total_df.to_excel(output_filename, index=False)
+        file1 = pd.read_excel('../output/dabang_parsing_data_geumam.xlsx')
+        file2 = pd.read_excel('../output/dabang_parsing_data_dukjin.xlsx')
 
-    # 피터팬 API로 부터 파싱
-    peter_url_geumam = 'https://api.peterpanz.com/houses/area?zoomLevel=15&center=%7B%22y%22:35.837424,%22_lat%22:35.837424,%22x%22:127.133088,%22_lng%22:127.133088%7D&dong=%EA%B8%88%EC%95%941%EB%8F%99&gungu=%EC%A0%84%EC%A3%BC%EC%8B%9C%20%EB%8D%95%EC%A7%84%EA%B5%AC&filter=latitude:35.8231411~35.8517043%7C%7Clongitude:127.1204923~127.1456837%7C%7CcontractType;%5B%22%EC%9B%94%EC%84%B8%22%5D%7C%7CroomType;%5B%22%EC%98%A4%ED%94%88%ED%98%95%20%EC%9B%90%EB%A3%B8%22,%22%EB%B6%84%EB%A6%AC%ED%98%95%20%EC%9B%90%EB%A3%B8%22%5D&&pageSize=90&pageIndex=1&order_id=1703077104&search=&response_version=5.2&filter_version=5.1&order_by=random'
-    peter_url_dukjin = 'https://api.peterpanz.com/houses/area?zoomLevel=17&center=%7B%22y%22:35.8442803,%22_lat%22:35.8442803,%22x%22:127.1255069,%22_lng%22:127.1255069%7D&dong=%EB%8D%95%EC%A7%84%EB%8F%991%EA%B0%80&gungu=%EC%A0%84%EC%A3%BC%EC%8B%9C%20%EB%8D%95%EC%A7%84%EA%B5%AC&filter=latitude:35.8407101~35.8478503%7C%7Clongitude:127.122358~127.1286558%7C%7CcontractType;%5B%22%EC%9B%94%EC%84%B8%22%5D%7C%7CroomType;%5B%22%EC%98%A4%ED%94%88%ED%98%95%20%EC%9B%90%EB%A3%B8%22,%22%EB%B6%84%EB%A6%AC%ED%98%95%20%EC%9B%90%EB%A3%B8%22%5D&&pageSize=90&pageIndex=1&order_id=1702364791&search=&response_version=5.2&filter_version=5.1&order_by=random'
-
-    peterpan_parsing(peter_url_geumam, 'geumam')
-    peterpan_parsing(peter_url_dukjin, 'dukjin')
-
-    file1 = pd.read_excel('../output/peterpan_parsing_data_geumam.xlsx')
-    file2 = pd.read_excel('../output/peterpan_parsing_data_dukjin.xlsx')
-
-    peterpan_total_df = pd.concat([file1, file2])
-    peterpan_total_df.columns = ['subject', 'thumbnail','livingroom_text','contract_type','monthly_fee','building_type','deposit','maintenance_cost','latitude','longitude']
-    peterpan_total_df = peterpan_total_df.rename(columns={'latitude': 'lat', 'longitude':'lon'})
-
-    calculate_distance_gujung(gujung_location[0], gujung_location[1], peterpan_total_df)
-    calculate_distance_sadae(sadae_location[0], sadae_location[1], peterpan_total_df)
-    calculate_distance_shin(shin_location[0], shin_location[1], peterpan_total_df)
+        dabang_total_df = pd.concat([file1, file2])
+        # print(dabang_total_df)
+        calculate_distance_gujung(gujung_location[0], gujung_location[1], dabang_total_df)
+        calculate_distance_sadae(sadae_location[0], sadae_location[1], dabang_total_df)
+        calculate_distance_shin(shin_location[0], shin_location[1], dabang_total_df)
 
 
-    output_dir = "../output/"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+        output_dir = "../output/"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
-    output_filename = os.path.join(output_dir, 'peterpan_total_data.xlsx')
-    peterpan_total_df.to_excel(output_filename, index=False)
+        output_filename = os.path.join(output_dir, 'dabang_total_data.xlsx')
+        dabang_total_df.to_excel(output_filename, index=False)
+
+        # 피터팬 API로 부터 파싱
+        peter_url_geumam = 'https://api.peterpanz.com/houses/area?zoomLevel=15&center=%7B%22y%22:35.837424,%22_lat%22:35.837424,%22x%22:127.133088,%22_lng%22:127.133088%7D&dong=%EA%B8%88%EC%95%941%EB%8F%99&gungu=%EC%A0%84%EC%A3%BC%EC%8B%9C%20%EB%8D%95%EC%A7%84%EA%B5%AC&filter=latitude:35.8231411~35.8517043%7C%7Clongitude:127.1204923~127.1456837%7C%7CcontractType;%5B%22%EC%9B%94%EC%84%B8%22%5D%7C%7CroomType;%5B%22%EC%98%A4%ED%94%88%ED%98%95%20%EC%9B%90%EB%A3%B8%22,%22%EB%B6%84%EB%A6%AC%ED%98%95%20%EC%9B%90%EB%A3%B8%22%5D&&pageSize=90&pageIndex=1&order_id=1703077104&search=&response_version=5.2&filter_version=5.1&order_by=random'
+        peter_url_dukjin = 'https://api.peterpanz.com/houses/area?zoomLevel=17&center=%7B%22y%22:35.8442803,%22_lat%22:35.8442803,%22x%22:127.1255069,%22_lng%22:127.1255069%7D&dong=%EB%8D%95%EC%A7%84%EB%8F%991%EA%B0%80&gungu=%EC%A0%84%EC%A3%BC%EC%8B%9C%20%EB%8D%95%EC%A7%84%EA%B5%AC&filter=latitude:35.8407101~35.8478503%7C%7Clongitude:127.122358~127.1286558%7C%7CcontractType;%5B%22%EC%9B%94%EC%84%B8%22%5D%7C%7CroomType;%5B%22%EC%98%A4%ED%94%88%ED%98%95%20%EC%9B%90%EB%A3%B8%22,%22%EB%B6%84%EB%A6%AC%ED%98%95%20%EC%9B%90%EB%A3%B8%22%5D&&pageSize=90&pageIndex=1&order_id=1702364791&search=&response_version=5.2&filter_version=5.1&order_by=random'
+
+        peterpan_parsing(peter_url_geumam, 'geumam')
+        peterpan_parsing(peter_url_dukjin, 'dukjin')
+
+        file1 = pd.read_excel('../output/peterpan_parsing_data_geumam.xlsx')
+        file2 = pd.read_excel('../output/peterpan_parsing_data_dukjin.xlsx')
+
+        peterpan_total_df = pd.concat([file1, file2])
+        peterpan_total_df.columns = ['hidx', 'subject', 'thumbnail','livingroom_text','contract_type','monthly_fee','building_type','deposit','maintenance_cost','latitude','longitude']
+        peterpan_total_df = peterpan_total_df.rename(columns={'latitude': 'lat', 'longitude':'lon'})
+
+        calculate_distance_gujung(gujung_location[0], gujung_location[1], peterpan_total_df)
+        calculate_distance_sadae(sadae_location[0], sadae_location[1], peterpan_total_df)
+        calculate_distance_shin(shin_location[0], shin_location[1], peterpan_total_df)
 
 
-    st.title("방찾기")
+        output_dir = "../output/"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        output_filename = os.path.join(output_dir, 'peterpan_total_data.xlsx')
+        peterpan_total_df.to_excel(output_filename, index=False)
+    else:
+        zigbang_total_df = pd.read_excel('../output/zigbang_total_data.xlsx')
+        dabang_total_df = pd.read_excel('../output/dabang_total_data.xlsx')
+        peterpan_total_df = pd.read_excel('../output/peterpan_total_data.xlsx')
+
+    # print(selected_location)
+    st.title(f"{st.session_state.selected_location} 주변 방찾기")
+    st.header(f"{st.session_state.selected_location}에서 가까운 방부터 보여드려요")
     # st.header("직방, 다방, 피터팬의 좋은방 구하기 사이트로 ")
     img = Image.open('output/logo.png')
     st.image(img)
 
     deposit_cost = st.slider('보증금 범위를 설정하세요', min_value=0, value=200, max_value=1000)
-    print(deposit_cost)
+    # print(deposit_cost)
     monthly_cost = st.slider('월세 범위를 설정하세요', min_value=0, value=50, max_value=100)
-    print(monthly_cost)
+    # print(monthly_cost)
     site = st.radio(label='어느 사이트의 정보를 불러올까요?', options=['직방', '다방', '피터팬의 좋은방 구하기'])
 
     if site == '직방':
         df = zigbang_total_df
-        # df.columns = ['lat', 'lon']
+        # 해당하는 보증금과 월세 범위에 해당하는 df 추리기
+        df = df[df['보증금'] <= deposit_cost]
+        df = df[df['월세'] <= monthly_cost]
+
         m = folium.Map(location=[35.8440159, 127.127327], zoom_start=15, tiles="cartodbpositron")
         for i, row in df.iterrows():
-            folium.Marker(location=[row['lat'], row['lon']]).add_to(m)
+            iframe = f"<a href='https://www.zigbang.com/home/oneroom/items/{row['item_id']}' target='_blank'></a>"
+            popup = folium.Popup(iframe, min_width=200, max_width=200)
+            # popup_content = f"<a href='https://www.zigbang.com/home/oneroom/items/{row['item_id']}' target='_blank'></a>"
+            folium.Marker(location=[row['lat'], row['lon']], popup= popup).add_to(m)
+
+            # tooltip_content = f"<img src='{row['사진']}' alt='property image' width='150'><br>"
+
+
+
         folium_static(m, width=600, height=500)
+
+        if st.session_state.selected_location == '구정문':
+
+            df['difference'] = df['gujung_lat'] +df['gujung_lng']
+            df['사진'] = df['사진'].apply(add_dimensions)
+            df1 = df.sort_values(ascending = True, by ='difference')
+            for i, row in df1.iterrows():
+                st.write(f" 월세 : {row['월세']}만원/ 보증금 : {row['보증금']}만원 관리비: {row['관리비']}만원")
+                st.image(row['사진'])
+                st.markdown(f"https://www.zigbang.com/home/oneroom/items/{row['item_id']}")
+                st.markdown("""---""")
+
+
+        elif st.session_state.selected_location == '사대부고':
+            df['difference'] = df['sadae_lat'] +df['sadae_lng']
+            df['사진'] = df['사진'].apply(add_dimensions)
+            df1 = df.sort_values(ascending=True, by ='difference')
+            for i, row in df1.iterrows():
+                st.write(f" 월세 : {row['월세']}만원/ 보증금 : {row['보증금']}만원 관리비: {row['관리비']}만원")
+                st.image(row['사진'])
+                st.markdown(f"https://www.zigbang.com/home/oneroom/items/{row['item_id']}")
+                st.markdown("""---""")
+
+
+        else:
+            df['difference'] = df['shin_lat'] +df['shin_lng']
+            df['사진'] = df['사진'].apply(add_dimensions)
+            df1 = df.sort_values(ascending = True, by ='difference')
+            for i, row in df1.iterrows():
+                st.write(f" 월세 : {row['월세']}만원/ 보증금 : {row['보증금']}만원 관리비: {row['관리비']}만원")
+                st.image(row['사진'])
+                st.markdown(f"https://www.zigbang.com/home/oneroom/items/{row['item_id']}")
+                st.markdown("""---""")
 
 
     elif site == '다방':
         df = dabang_total_df
-        print(df)
-        # df.colums = ['lat', 'lon']
+        df[['보증금', '월세']] = df['price_title'].str.split('/', expand=True)
+        df[['보증금', '월세']] = df[['보증금', '월세']].apply(pd.to_numeric)
+        df[['층', '면적', '관리비']] = df['room_desc2'].str.split(',', expand=True)
+        df = df[df['보증금'] <= deposit_cost]
+        df = df[df['월세'] <= monthly_cost]
+
         m = folium.Map(location=[35.8440159, 127.127327], zoom_start=15, tiles="cartodbpositron")
         for i, row in df.iterrows():
             folium.Marker(location=[row['lat'], row['lon']]).add_to(m)
         folium_static(m, width=600, height=500)
 
+
+        if st.session_state.selected_location == '구정문':
+            df['difference'] = df['gujung_lat'] +df['gujung_lng']
+            df1 = df.sort_values(ascending = True, by ='difference')
+            for i, row in df1.iterrows():
+                st.header(f"{row['title']}")
+                st.write(f" 월세 : {row['월세']}만원/ 보증금 : {row['보증금']}만원/ {row['관리비']}원")
+                st.image(row['img_url'])
+                st.markdown(f"https://www.dabangapp.com/room/{row['id']}")
+                st.markdown("""---""")
+
+
+        elif st.session_state.selected_location == '사대부고':
+            df['difference'] = df['sadae_lat'] +df['sadae_lng']
+            df1 = df.sort_values(ascending = True, by ='difference')
+            for i, row in df1.iterrows():
+                st.header(f"{row['title']}")
+                st.write(f" 월세 : {row['월세']}만원/ 보증금 : {row['보증금']}만원 {row['관리비']}원")
+                st.image(row['img_url'])
+                st.markdown(f"https://www.dabangapp.com/room/{row['id']}")
+                st.markdown("""---""")
+
+
+        else:
+            df['difference'] = df['shin_lat'] +df['shin_lng']
+            df1 = df.sort_values(ascending = True, by ='difference')
+            for i, row in df1.iterrows():
+                st.header(f"{row['title']}")
+                st.write(f" 월세 : {row['월세']}만원/ 보증금 : {row['보증금']}만원 {row['관리비']}원")
+
+                st.image(row['img_url'])
+                st.markdown(f"https://www.dabangapp.com/room/{row['id']}")
+                st.markdown("""---""")
+
+
+
+
+ # 피터팬
     else:
         df = peterpan_total_df
-        print(df)
-        # df.colums = ['lat', 'lon']
+        # df = df.rename(columns = {'monthly_fee':'building_type', 'building_type':'monthly_fee'}, inplace=True)
+
+        df = df[df['deposit']/10000 <= deposit_cost]
+        df = df[df['building_type']/10000 <= monthly_cost]
+
         m = folium.Map(location=[35.8440159, 127.127327], zoom_start=15, tiles="cartodbpositron")
         for i, row in df.iterrows():
             folium.Marker(location=[row['lat'], row['lon']]).add_to(m)
         folium_static(m, width=600, height=500)
+
+        if st.session_state.selected_location == '구정문':
+            df['difference'] = df['gujung_lat'] +df['gujung_lng']
+            df1 = df.sort_values(ascending = True, by ='difference')
+            for i, row in df1.iterrows():
+                st.header(f"{row['subject']}")
+                st.write(f" 월세 : {row['building_type'] /10000}만원/ 보증금 : {row['deposit'] /10000}만원 / 관리비: {row['maintenance_cost']} 원")
+                st.image(row['thumbnail'])
+                st.markdown(f"https://www.peterpanz.com/house/{row['hidx']}")
+                st.markdown("""---""")
+
+
+        elif st.session_state.selected_location == '사대부고':
+            df['difference'] = df['sadae_lat'] +df['sadae_lng']
+            df1 = df.sort_values(ascending = True, by ='difference')
+            for i, row in df1.iterrows():
+                st.header(f"{row['subject']}")
+                st.write(f" 월세 : {row['building_type']}만원/ 보증금 : {row['deposit']}만원 / 관리비: {row['maintenance_cost']}원")
+                st.image(row['thumbnail'])
+                st.markdown(f"https://www.peterpanz.com/house/{row['hidx']}")
+                st.markdown("""---""")
+
+
+        else:
+            df['difference'] = df['shin_lat'] +df['shin_lng']
+            df1 = df.sort_values(ascending = True, by ='difference')
+            for i, row in df1.iterrows():
+                st.header(f"{row['subject']}")
+                st.write(f" 월세 : {row['building_type']}만원/ 보증금 : {row['deposit']}만원 / 관리비: {row['maintenance_cost']}원")
+                st.image(row['thumbnail'])
+                st.markdown(f"https://www.peterpanz.com/house/{row['hidx']}")
+                st.markdown("""---""")
+
 
 
 

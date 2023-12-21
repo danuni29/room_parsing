@@ -32,7 +32,7 @@ def parsing_zigbang(addr):
     # print(response.json())
 
     items = response.json()["items"]
-    print(items)
+    # print(items)
 
 
     colums = ["item_id", "sales_type", "deposit", "rent", "random_location", "manage_cost", 'images_thumbnail']
@@ -51,4 +51,6 @@ def parsing_zigbang(addr):
 
     output_filename = os.path.join(output_dir, f'zigbang_parsing_data_{addr}.xlsx')
     df.to_excel(output_filename, index=False)
+
+
 
